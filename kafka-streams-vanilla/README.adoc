@@ -1,0 +1,43 @@
+Assuming, you are running Confluent docker-compose.
+
+```
+docker exec -it broker /bin/kafka-topics --bootstrap-server localhost:9092 --create --topic txn-vanilla
+docker exec -it broker /bin/kafka-topics --bootstrap-server localhost:9092 --create --topic user-vanilla
+docker exec -it broker /bin/kafka-topics --bootstrap-server localhost:9092 --create --topic suspected-txn-vanilla
+```
+
+
+Just in case, if you ahave to delete a topic:
+
+```
+docker exec -it broker /bin/kafka-topics --bootstrap-server localhost:9092 --delete --topic txn-vanilla
+```
+
+Enter user data:
+
+```
+docker exec -it broker /bin/kafka-console-producer --bootstrap-server localhost:9092 --topic user-vanilla --property "parse.key=true" --property "key.separator=:"
+>12345678-1234-5678-1234-567812345678:{"id": "12345678-1234-5678-1234-567812345678","phoneNumber": "123-456-7890", "creditLimitDollars": 10000}
+```
+
+Verify we entered it properly:
+
+```
+docker exec -it broker /bin/kafka-console-consumer --bootstrap-server localhost:9092 --topic user-vanilla --from-beginning --property print.key=true
+```
+
+Before entering txn data, consume from the output topic:
+
+```
+docker exec -it broker /bin/kafka-console-consumer --bootstrap-server localhost:9092 --topic suspected-txn-vanilla --from-beginning
+```
+
+Now enter the following data:
+
+```
+docker exec -it broker /bin/kafka-console-producer --bootstrap-server localhost:9092 --topic txn-vanilla
+>{"uuid": "123e4567-e89b-12d3-a456-556642440000", "userId": "12345678-1234-5678-1234-567812345678", "amountCents": 5}
+>{"uuid": "123e4567-e89b-12d3-a456-556642440000", "userId": "12345678-1234-5678-1234-567812345678", "amountCents": 5000}
+```
+
+You should see some data in the output topic now.
